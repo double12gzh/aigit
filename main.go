@@ -238,7 +238,7 @@ func main() {
 					}
 
 					if pushChoice == "Yes" {
-						cmd := exec.Command("git", "push")
+						cmd := exec.Command("git", "push", "origin", "HEAD")
 						output, err := cmd.CombinedOutput()
 						if err != nil {
 							color.Red("Error pushing changes: %v\n%s", err, output)
