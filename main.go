@@ -78,7 +78,7 @@ func main() {
 			// Validate provider
 			switch provider {
 			case llm.ProviderOpenAI, llm.ProviderGemini, llm.ProviderDeepseek, llm.ProviderQwen:
-				if err := config.AddProvider(provider, apiKey); err != nil {
+				if err := config.AddProvider(provider, apiKey, ""); err != nil {
 					fmt.Printf("Error saving config: %v\n", err)
 					os.Exit(1)
 				}
@@ -86,6 +86,16 @@ func main() {
 				if len(args) < 3 {
 					color.Red("Endpoint ID is required for Doubao provider")
 					color.Red("Please run `aigit auth add doubao <api_key> <endpoint_id>`")
+					os.Exit(1)
+				}
+				if err := config.AddProvider(provider, apiKey, "", args[2]); err != nil {
+					fmt.Printf("Error saving config: %v\n", err)
+					os.Exit(1)
+				}
+			case llm.ProviderModelscope:
+				if len(args) < 2 {
+					color.Red("Model name is required for Modelscope provider")
+					color.Red("Please run `aigit auth add modelscope <api_key> <model_name>`")
 					os.Exit(1)
 				}
 				if err := config.AddProvider(provider, apiKey, args[2]); err != nil {

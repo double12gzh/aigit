@@ -8,8 +8,9 @@ import (
 )
 
 type Provider struct {
-	APIKey   string `json:"api_key"`
-	Endpoint string `json:"endpoint"`
+	APIKey    string `json:"api_key"`
+	Endpoint  string `json:"endpoint"`
+	ModelName string `json:"model_name"`
 }
 
 type Config struct {
@@ -69,12 +70,17 @@ func (c *Config) Save() error {
 	return nil
 }
 
-func (c *Config) AddProvider(provider, apiKey string, endpoint ...string) error {
+func (c *Config) AddProvider(provider, apiKey string, modelName string, endpoint ...string) error {
 	switch provider {
 	case ProviderDoubao:
 		c.Providers[provider] = Provider{
 			APIKey:   apiKey,
 			Endpoint: endpoint[0],
+		}
+	case ProviderModelscope:
+		c.Providers[provider] = Provider{
+			APIKey:    apiKey,
+			ModelName: modelName,
 		}
 	default:
 		c.Providers[provider] = Provider{
@@ -138,6 +144,8 @@ func (c *Config) GetMessageGenerator() (MessageGenerator, error) {
 		return NewDeepseekGenerator(p.APIKey), nil
 	case ProviderQwen:
 		return NewQwenGenerator(p.APIKey), nil
+	case ProviderModelscope:
+		return NewModelscopeGenerator(p.APIKey, p.ModelName), nil
 	default:
 		// If unsupported provider is offered, use the default one
 		return NewDefauleGenerator()

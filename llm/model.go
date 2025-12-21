@@ -21,11 +21,12 @@ import (
 )
 
 const (
-	ProviderOpenAI   = "openai"
-	ProviderGemini   = "gemini"
-	ProviderDoubao   = "doubao"
-	ProviderDeepseek = "deepseek"
-	ProviderQwen     = "qwen"
+	ProviderOpenAI     = "openai"
+	ProviderGemini     = "gemini"
+	ProviderDoubao     = "doubao"
+	ProviderDeepseek   = "deepseek"
+	ProviderQwen       = "qwen"
+	ProviderModelscope = "modelscope"
 
 	// Model constants
 	geminiModel   = "gemini-pro"
@@ -73,6 +74,7 @@ var (
 	_ MessageGenerator = (*DoubaoGenerator)(nil)
 	_ MessageGenerator = (*DeepseekGenerator)(nil)
 	_ MessageGenerator = (*QwenGenerator)(nil)
+	_ MessageGenerator = (*ModelscopeGenerator)(nil)
 )
 
 // MessageGenerator Define a commit message generator
@@ -167,7 +169,21 @@ func NewQwenGenerator(apiKey string) *QwenGenerator {
 }
 
 func (g *QwenGenerator) GenerateCommitMessage(diff string) (string, error) {
-	return generateQwenCommitMessage(diff, g.apiKey)
+	return generateQwenCommitMessage(diff, g.apiKey, qwenModel, "https://dashscope.aliyuncs.com/compatible-mode/v1/")
+}
+
+// ModelscopeGenerator Implemention Modelscope provider
+type ModelscopeGenerator struct {
+	apiKey    string
+	modelName string
+}
+
+func NewModelscopeGenerator(apiKey, modelName string) *ModelscopeGenerator {
+	return &ModelscopeGenerator{apiKey: apiKey, modelName: modelName}
+}
+
+func (g *ModelscopeGenerator) GenerateCommitMessage(diff string) (string, error) {
+	return generateQwenCommitMessage(diff, g.apiKey, g.modelName, "https://api-inference.modelscope.cn/v1/")
 }
 
 func generateGeminiCommitMessage(diff, apiKey string) (string, error) {
@@ -309,7 +325,7 @@ func generateDeepseekCommitMessage(diff, apiKey string) (string, error) {
 	return "", fmt.Errorf("invalid response format from Deepseek: %v", result)
 }
 
-func generateQwenCommitMessage(diff, apiKey string) (string, error) {
+func generateQwenCommitMessage(diff, apiKey string, modelName string, baseURL string) (string, error) {
 	apiKey = strings.TrimSpace(apiKey)
 	if apiKey == "" {
 		apiKey = os.Getenv("DASHSCOPE_API_KEY")
@@ -321,7 +337,7 @@ func generateQwenCommitMessage(diff, apiKey string) (string, error) {
 
 	client := openai.NewClient(
 		openaioption.WithAPIKey(apiKey),
-		openaioption.WithBaseURL("https://dashscope.aliyuncs.com/compatible-mode/v1/"),
+		openaioption.WithBaseURL(baseURL),
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -333,7 +349,7 @@ func generateQwenCommitMessage(diff, apiKey string) (string, error) {
 		Messages: openai.F([]openai.ChatCompletionMessageParamUnion{
 			openai.UserMessage(prompt),
 		}),
-		Model: openai.F(qwenModel),
+		Model: openai.F(modelName),
 	})
 	if err != nil {
 		return "", fmt.Errorf("generating commit message: %w", err)
