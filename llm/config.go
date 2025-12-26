@@ -82,6 +82,12 @@ func (c *Config) AddProvider(provider, apiKey string, modelName string, endpoint
 			APIKey:    apiKey,
 			ModelName: modelName,
 		}
+	case ProviderSelfHosted:
+		c.Providers[provider] = Provider{
+			APIKey:    apiKey,
+			Endpoint:  endpoint[0],
+			ModelName: modelName,
+		}
 	default:
 		c.Providers[provider] = Provider{
 			APIKey: apiKey,
@@ -146,6 +152,8 @@ func (c *Config) GetMessageGenerator() (MessageGenerator, error) {
 		return NewQwenGenerator(p.APIKey), nil
 	case ProviderModelscope:
 		return NewModelscopeGenerator(p.APIKey, p.ModelName), nil
+	case ProviderSelfHosted:
+		return NewSelfHostedGenerator(p.APIKey, p.Endpoint, p.ModelName), nil
 	default:
 		// If unsupported provider is offered, use the default one
 		return NewDefauleGenerator()

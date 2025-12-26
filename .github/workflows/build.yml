@@ -62,7 +62,7 @@ jobs:
         with:
           path: artifacts
           merge-multiple: true
-          
+
       # First, generate the release notes
       - name: Draft Release
         id: release_drafter
